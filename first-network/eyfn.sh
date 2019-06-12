@@ -93,7 +93,7 @@ function removeUnwantedImages() {
 # Generate the needed certificates, the genesis block and start the network.
 function networkUp () {
   # generate artifacts if they don't exist
-  if [ ! -d "org${ORG}-artifacts/crypto-config" ]; then
+  if [ ! -d "org${ORG_NO}-artifacts/crypto-config" ]; then
     generateCerts
     generateChannelArtifacts
     createConfigTx
@@ -105,29 +105,29 @@ function networkUp () {
       IMAGE_TAG=$IMAGETAG docker-compose -f $COMPOSE_FILE_ORG up -d 2>&1
   fi
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to start Org${ORG} network"
+    echo "ERROR !!!! Unable to start Org${ORG_NO} network"
     exit 1
   fi
   echo
   echo "###############################################################"
-  echo "############### Have Org${ORG} peers join network ##################"
+  echo "############### Have Org${ORG_NO} peers join network ##################"
   echo "###############################################################"
-  docker exec Org${ORG}cli ./scripts/step2org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
+  docker exec Org${ORG_NO}cli ./scripts/step2org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG_NO
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to have Org${ORG} peers join network"
+    echo "ERROR !!!! Unable to have Org${ORG_NO} peers join network"
     exit 1
   fi
   echo
   echo "###############################################################"
-  echo "##### Upgrade chaincode to have Org${ORG} peers on the network #####"
+  echo "##### Upgrade chaincode to have Org${ORG_NO} peers on the network #####"
   echo "###############################################################"
-  docker exec cli ./scripts/step3org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
+  docker exec cli ./scripts/step3org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG_NO
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to add Org${ORG} peers on network"
+    echo "ERROR !!!! Unable to add Org${ORG_NO} peers on network"
     exit 1
   fi
   # finish by running the test
-  docker exec Org${ORG}cli ./scripts/testorg.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
+  docker exec Org${ORG_NO}cli ./scripts/testorg.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG_NO
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Unable to run test"
     exit 1
@@ -144,7 +144,7 @@ function networkDown () {
     #Cleanup images
     removeUnwantedImages
     # remove orderer block and other channel configuration transactions and certs
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org${ORG}-artifacts/crypto-config/ channel-artifacts/org${ORG}.json
+    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org${ORG_NO}-artifacts/crypto-config/ channel-artifacts/org${ORG_NO}.json
     # remove the docker-compose yaml file that was customized to the example
     rm -f docker-compose-e2e.yaml
   fi
@@ -155,7 +155,7 @@ function networkDown () {
 function createConfigTx () {
   echo
   echo "###############################################################"
-  echo "####### Generate and submit config tx to add Org${ORG} #############"
+  echo "####### Generate and submit config tx to add Org${ORG_NO} #############"
   echo "###############################################################"
   docker exec cli scripts/step1org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
   if [ $? -ne 0 ]; then
@@ -177,12 +177,12 @@ function generateCerts (){
   fi
   echo
   echo "###############################################################"
-  echo "##### Generate Org${ORG} certificates using cryptogen tool #########"
+  echo "##### Generate Org${ORG_NO} certificates using cryptogen tool #########"
   echo "###############################################################"
 
-  (cd org${ORG}-artifacts
+  (cd org${ORG_NO}-artifacts
    set -x
-   cryptogen generate --config=./org${ORG}-crypto.yaml
+   cryptogen generate --config=./org${ORG_NO}-crypto.yaml
    res=$?
    set +x
    if [ $res -ne 0 ]; then
@@ -201,20 +201,20 @@ function generateChannelArtifacts() {
     exit 1
   fi
   echo "##########################################################"
-  echo "#########  Generating Org${ORG} config material ###############"
+  echo "#########  Generating Org${ORG_NO} config material ###############"
   echo "##########################################################"
-  (cd org${ORG}-artifacts
+  (cd org${ORG_NO}-artifacts
    export FABRIC_CFG_PATH=$PWD
    set -x
-   configtxgen -printOrg Org${ORG}MSP > ../channel-artifacts/org${ORG}.json
+   configtxgen -printOrg Org${ORG_NO}MSP > ../channel-artifacts/org${ORG_NO}.json
    res=$?
    set +x
    if [ $res -ne 0 ]; then
-     echo "Failed to generate Org${ORG} config material..."
+     echo "Failed to generate Org${ORG_NO} config material..."
      exit 1
    fi
   )
-  cp -r crypto-config/ordererOrganizations org${ORG}-artifacts/crypto-config/
+  cp -r crypto-config/ordererOrganizations org${ORG_NO}-artifacts/crypto-config/
   echo
 }
 
@@ -236,7 +236,7 @@ CLI_TIMEOUT=10
 #default for delay
 CLI_DELAY=3
 #Organisation number
-ORG=-1
+ORG_NO=-1
 # channel name defaults to "mychannel"
 CHANNEL_NAME="mychannel"
 # use this as the default docker-compose yaml definition
@@ -286,7 +286,7 @@ while getopts "h?c:t:d:f:s:l:i:o:v" opt; do
     ;;
     d)  CLI_DELAY=$OPTARG
     ;;
-    o)  ORG=$OPTARG
+    o)  ORG_NO=$OPTARG
     ;;
     f)  COMPOSE_FILE=$OPTARG
     ;;
@@ -301,14 +301,14 @@ while getopts "h?c:t:d:f:s:l:i:o:v" opt; do
   esac
 done
 
-if [ $ORG == -1]; then
+if [ $ORG_NO == -1 ]; then
   echo "Organisation number required, use -o 3, to give ORG_NUMBER=3"
   exit 1
 fi
-./generate-org-scripts.sh $ORG
+./generate-org-scripts.sh $ORG_NO
 # use this as the default docker-compose yaml definition
-COMPOSE_FILE_ORG=$(echo docker-compose-org${ORG}.yaml)
-COMPOSE_FILE_COUCH_ORG=$(echo docker-compose-couch-org${ORG}.yaml)
+COMPOSE_FILE_ORG=$(echo docker-compose-org${ORG_NO}.yaml)
+COMPOSE_FILE_COUCH_ORG=$(echo docker-compose-couch-org${ORG_NO}.yaml)
 
 # Announce what was requested
 

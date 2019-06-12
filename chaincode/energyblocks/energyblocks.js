@@ -79,13 +79,13 @@ let Chaincode = class {
     // ==== Input sanitation ====
     console.info('--- start init freq ---')
     // Time in unix format
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
     let startTime = parseInt(args[0]);
@@ -110,7 +110,7 @@ let Chaincode = class {
     // === Save marble to state ===
     await stub.putState('F~' + args[0], Buffer.from(JSON.stringify(freq)));
     let indexName = 'F~startTime~endTime'
-    let startTimeaEndTimeIndexKey = await stub.createCompositeKey(indexName, [freq.startTime, freq.endTime]);
+    let startTimeaEndTimeIndexKey = await stub.createCompositeKey(indexName, [`${freq.startTime}`, `${freq.endTime}`]);
     console.info(startTimeaEndTimeIndexKey);
     //  Save index entry to state. Only the key name is needed, no need to store a duplicate copy of the freq.
     //  Note - passing a 'nil' value will effectively delete the key from state, therefore we pass null character as value
@@ -129,19 +129,19 @@ let Chaincode = class {
     }
     // ==== Input sanitation ====
     console.info('--- start init unit ---')
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
-    if (args[3].lenth <= 0) {
+    if (args[3].length <= 0) {
       throw new Error('4th argument must be a non-empty string');
     }
-    if (args[4].lenth <= 0) {
+    if (args[4].length <= 0) {
       throw new Error('5th argument must be a non-empty string');
     }
     let societyID = args[0];
@@ -189,16 +189,16 @@ let Chaincode = class {
     }
     // ==== Input sanitation ====
     console.info('--- start init bill ---')
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
-    if (args[3].lenth <= 0) {
+    if (args[3].length <= 0) {
       throw new Error('4th argument must be a non-empty string');
     }
 
@@ -211,8 +211,8 @@ let Chaincode = class {
     }
 
     // ==== Check if unit already exists ====
-    let unitState = await stub.getState('B~' + societyID + stationID + args[2]); //arg[2] = string startTime
-    if (unitState.toString()) {
+    let billState = await stub.getState('B~' + societyID + stationID + args[2]); //arg[2] = string startTime
+    if (billState.toString()) {
       throw new Error('This bill already exist between: ' + societyID + '~' + stationID);
     }
 
@@ -240,7 +240,7 @@ let Chaincode = class {
     }
     let unitJSON = {};
     try {
-      unitJSON = JSON.parse(unitJSON.toString());
+      unitJSON = JSON.parse(unitAsbytes.toString());
     } catch (err) {
       jsonResp = {};
       jsonResp.error = 'Failed to decode JSON of unit Block between: ' + societyID + '~' + stationID;
@@ -301,13 +301,13 @@ let Chaincode = class {
     if (args.length != 3) {
       throw new Error('Incorrect number of arguments. Expecting 3 args to query');
     }
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
 
@@ -336,13 +336,13 @@ let Chaincode = class {
     if (args.length != 3) {
       throw new Error('Incorrect number of arguments. Expecting 3 args to query');
     }
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
 
@@ -410,13 +410,13 @@ let Chaincode = class {
     if (args.length != 3) {
       throw new Error('Incorrect number of arguments. Expecting 3 args to delete');
     }
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
 
@@ -462,13 +462,13 @@ let Chaincode = class {
     if (args.length != 3) {
       throw new Error('Incorrect number of arguments. Expecting 3 args to delete');
     }
-    if (args[0].lenth <= 0) {
+    if (args[0].length <= 0) {
       throw new Error('1st argument must be a non-empty string');
     }
-    if (args[1].lenth <= 0) {
+    if (args[1].length <= 0) {
       throw new Error('2nd argument must be a non-empty string');
     }
-    if (args[2].lenth <= 0) {
+    if (args[2].length <= 0) {
       throw new Error('3rd argument must be a non-empty string');
     }
 

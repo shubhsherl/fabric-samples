@@ -17,19 +17,19 @@ DELAY="$2"
 LANGUAGE="$3"
 TIMEOUT="$4"
 VERBOSE="$5"
-ORG="$6"
+ORG_NO="$6"
 : ${CHANNEL_NAME:="mychannel"}
 : ${DELAY:="3"}
 : ${LANGUAGE:="golang"}
 : ${TIMEOUT:="10"}
 : ${VERBOSE:="false"}
-: ${ORG:="3"}
+: ${ORG_NO:="3"}
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=5
 
 echo
-echo "========= Finish adding Org${ORG} to your first network ========= "
+echo "========= Finish adding Org${ORG_NO} to your first network ========= "
 echo
 
 EB_SRC_PATH="/opt/gopath/src/github.com/chaincode/energyblocks/"
@@ -52,7 +52,7 @@ echo "===================== Upgrading chaincode on peer0.org1 ==================
 upgradeChaincode 0 1
 
 echo
-echo "========= Finished adding Org${ORG} to your first network! ========= "
+echo "========= Finished adding Org${ORG_NO} to your first network! ========= "
 echo
 
 exit 0

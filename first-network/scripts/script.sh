@@ -109,7 +109,8 @@ if [ "${NO_CHAINCODE}" != "true" ]; then
 	# chaincodeQuery 0 1 100
 
 	# Invoke chaincode on peer0.org1 and peer0.org2
-	echo "Sending invoke freq transaction on peer0.org1 peer0.org2..."
+	echo "Sending invoke freq transaction on peer0.org1 peer0.org2...10sec"
+	sleep 10
 	chaincodeInvokeFreq 0 1 0 2
 	
 	## Install chaincode on peer1.org2
@@ -132,9 +133,9 @@ if [ "${NO_CHAINCODE}" != "true" ]; then
 	echo "Sending invoke bill transaction on peer0.org1 peer0.org2..."
 	chaincodeInvokeBill 0 1 0 2
 
-	# Query on chaincode on peer1.org2, check if the result is 1.4952
+	# Query on chaincode on peer1.org2, check if the result is 1.505
 	echo "Querying chaincode bill on peer1.org2..."
-	chaincodeQueryBill 1 2 1.4952
+	chaincodeQueryBill 1 2 1.505
 	
 fi
 

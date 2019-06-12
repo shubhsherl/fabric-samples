@@ -16,13 +16,13 @@ DELAY="$2"
 LANGUAGE="$3"
 TIMEOUT="$4"
 VERBOSE="$5"
-ORG="$6"
+ORG_NO="$6"
 : ${CHANNEL_NAME:="mychannel"}
 : ${DELAY:="3"}
 : ${LANGUAGE:="golang"}
 : ${TIMEOUT:="10"}
 : ${VERBOSE:="false"}
-: ${ORG:="3"}
+: ${ORG_NO:="3"}
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=5
@@ -39,7 +39,7 @@ fi
 . scripts/utils.sh
 
 echo
-echo "========= Creating config transaction to add org${ORG} to network =========== "
+echo "========= Creating config transaction to add org${ORG_NO} to network =========== "
 echo
 
 
@@ -48,30 +48,30 @@ fetchChannelConfig ${CHANNEL_NAME} config.json
 
 # Modify the configuration to append the new org
 set -x
-jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"Org${ORG}MSP":.[1]}}}}}' config.json ./channel-artifacts/org${ORG}.json > modified_config.json
+jq -s '.[0] * {"channel_group":{"groups":{"Application":{"groups": {"Org${ORG_NO}MSP":.[1]}}}}}' config.json ./channel-artifacts/org${ORG_NO}.json > modified_config.json
 set +x
 
 # Compute a config update, based on the differences between config.json and modified_config.json, write it as a transaction to new org_update_in_envelope.pb
-createConfigUpdate ${CHANNEL_NAME} config.json modified_config.json org${ORG}_update_in_envelope.pb
+createConfigUpdate ${CHANNEL_NAME} config.json modified_config.json org${ORG_NO}_update_in_envelope.pb
 
 echo
-echo "========= Config transaction to add org${ORG} to network created ===== "
+echo "========= Config transaction to add org${ORG_NO} to network created ===== "
 echo
 
 echo "Signing config transaction"
 echo
-signConfigtxAsPeerOrg 1 org${ORG}_update_in_envelope.pb
+signConfigtxAsPeerOrg 1 org${ORG_NO}_update_in_envelope.pb
 
 echo
 echo "========= Submitting transaction from a different peer (peer0.org2) which also signs it ========= "
 echo
 setGlobals 0 2
 set -x
-peer channel update -f org${ORG}_update_in_envelope.pb -c ${CHANNEL_NAME} -o orderer.example.com:7050 --tls --cafile ${ORDERER_CA}
+peer channel update -f org${ORG_NO}_update_in_envelope.pb -c ${CHANNEL_NAME} -o orderer.example.com:7050 --tls --cafile ${ORDERER_CA}
 set +x
 
 echo
-echo "========= Config transaction to add org${ORG} to network submitted! =========== "
+echo "========= Config transaction to add org${ORG_NO} to network submitted! =========== "
 echo
 
 exit 0
