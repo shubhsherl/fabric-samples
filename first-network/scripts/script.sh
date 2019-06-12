@@ -25,11 +25,13 @@ LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=10
 
-EB_SRC_PATH="github.com/chaincode/energyblocks/"
+EB_SRC_PATH="/opt/gopath/src/github.com/chaincode/energyblocks/"
 LANGUAGE="node"
 
-echo "Installing jq"
-apt-get -y update && apt-get -y install jq
+if ! dpkg -s jq >/dev/null 2>&1; then
+	echo "Installing jq"
+	apt-get -y update && apt-get -y install jq
+fi
 
 # CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
 # if [ "$LANGUAGE" = "node" ]; then
@@ -118,17 +120,17 @@ if [ "${NO_CHAINCODE}" != "true" ]; then
 	echo "Querying chaincode freq on peer1.org2..."
 	chaincodeQueryFreq 1 2 50.02
 
-	# Invoke chaincode on peer1.org2
-	echo "Sending invoke unit transaction on peer1.org2..."
-	chaincodeInvokeUnit 0 1
+	# Invoke chaincode on peer0.org1 and peer0.org2
+	echo "Sending invoke unit transaction on peer0.org1 peer0.org2..."
+	chaincodeInvokeUnit 0 1 0 2
 
 	# Query on chaincode on peer1.org2, check if the result is 0.3
 	echo "Querying chaincode unit on peer1.org2..."
 	chaincodeQueryUnit 1 2 0.3
 
-	# Invoke chaincode on peer0.org1
-	echo "Sending invoke bill transaction on peer1.org2..."
-	chaincodeInvokeBill 0 1
+	# Invoke chaincode on peer0.org1 and peer0.org2
+	echo "Sending invoke bill transaction on peer0.org1 peer0.org2..."
+	chaincodeInvokeBill 0 1 0 2
 
 	# Query on chaincode on peer1.org2, check if the result is 1.4952
 	echo "Querying chaincode bill on peer1.org2..."

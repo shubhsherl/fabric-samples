@@ -189,7 +189,7 @@ chaincodeQueryFreq() {
     peer chaincode query -C $CHANNEL_NAME -n energy -c '{"Args":["readFreq","1560323335"]}' >&log.txt
     res=$?
     set +x
-    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}' | jq '.avgFreq')
+    test $res -eq 0 && VALUE=$(cat log.txt | jq '.avgFreq')
     test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
     # removed the string "Query Result" from peer chaincode query command
     # result. as a result, have to support both options until the change
@@ -229,7 +229,7 @@ chaincodeQueryUnit() {
     peer chaincode query -C $CHANNEL_NAME -n energy -c '{"Args":["readUnit","Org1","Org2","1560323335"]}' >&log.txt
     res=$?
     set +x
-    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}'| jq '.units')
+    test $res -eq 0 && VALUE=$(cat log.txt | jq '.units')
     test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
     # removed the string "Query Result" from peer chaincode query command
     # result. as a result, have to support both options until the change
@@ -269,7 +269,7 @@ chaincodeQueryBill() {
     peer chaincode query -C $CHANNEL_NAME -n energy -c '{"Args":["readBill","Org1","Org2","1560323335"]}' >&log.txt
     res=$?
     set +x
-    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}' | jq '.price')
+    test $res -eq 0 && VALUE=$(cat log.txt | jq '.price')
     test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
     # removed the string "Query Result" from peer chaincode query command
     # result. as a result, have to support both options until the change

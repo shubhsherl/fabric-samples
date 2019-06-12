@@ -64,7 +64,7 @@ let Chaincode = class {
   // getBill based on frequecy and unit of consumption
   // ===================================================
   getPrice(freq, unit) {
-    return unit * (5 - (50-freq)*0.8);
+    return parseFloat((unit * (5 - (50-freq)*0.8)).toFixed(3));
   }
 
   // ===============================================

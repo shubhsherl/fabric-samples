@@ -82,7 +82,7 @@ function clearContainers () {
 # specifically the following images are often left behind:
 # TODO list generated image naming patterns
 function removeUnwantedImages() {
-  DOCKER_IMAGE_IDS=$(docker images|awk '($1 ~ /dev-peer.*.mycc.*/) {print $3}')
+  DOCKER_IMAGE_IDS=$(docker images|awk '($1 ~ /dev-peer.*.energy.*/) {print $3}')
   if [ -z "$DOCKER_IMAGE_IDS" -o "$DOCKER_IMAGE_IDS" == " " ]; then
     echo "---- No images available for deletion ----"
   else
@@ -93,41 +93,41 @@ function removeUnwantedImages() {
 # Generate the needed certificates, the genesis block and start the network.
 function networkUp () {
   # generate artifacts if they don't exist
-  if [ ! -d "org3-artifacts/crypto-config" ]; then
+  if [ ! -d "org${ORG}-artifacts/crypto-config" ]; then
     generateCerts
     generateChannelArtifacts
     createConfigTx
   fi
-  # start org3 peers
+  # start new org peers
   if [ "${IF_COUCHDB}" == "couchdb" ]; then
-      IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH_ORG3 up -d 2>&1
+      IMAGE_TAG=${IMAGETAG} docker-compose -f $COMPOSE_FILE_ORG -f $COMPOSE_FILE_COUCH_ORG up -d 2>&1
   else
-      IMAGE_TAG=$IMAGETAG docker-compose -f $COMPOSE_FILE_ORG3 up -d 2>&1
+      IMAGE_TAG=$IMAGETAG docker-compose -f $COMPOSE_FILE_ORG up -d 2>&1
   fi
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to start Org3 network"
+    echo "ERROR !!!! Unable to start Org${ORG} network"
     exit 1
   fi
   echo
   echo "###############################################################"
-  echo "############### Have Org3 peers join network ##################"
+  echo "############### Have Org${ORG} peers join network ##################"
   echo "###############################################################"
-  docker exec Org3cli ./scripts/step2org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE
+  docker exec Org${ORG}cli ./scripts/step2org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to have Org3 peers join network"
+    echo "ERROR !!!! Unable to have Org${ORG} peers join network"
     exit 1
   fi
   echo
   echo "###############################################################"
-  echo "##### Upgrade chaincode to have Org3 peers on the network #####"
+  echo "##### Upgrade chaincode to have Org${ORG} peers on the network #####"
   echo "###############################################################"
-  docker exec cli ./scripts/step3org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE
+  docker exec cli ./scripts/step3org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
   if [ $? -ne 0 ]; then
-    echo "ERROR !!!! Unable to add Org3 peers on network"
+    echo "ERROR !!!! Unable to add Org${ORG} peers on network"
     exit 1
   fi
   # finish by running the test
-  docker exec Org3cli ./scripts/testorg3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE
+  docker exec Org${ORG}cli ./scripts/testorg.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Unable to run test"
     exit 1
@@ -136,7 +136,7 @@ function networkUp () {
 
 # Tear down running network
 function networkDown () {
-  docker-compose -f $COMPOSE_FILE -f $COMPOSE_FILE_KAFKA -f $COMPOSE_FILE_RAFT2 -f $COMPOSE_FILE_ORG3 -f $COMPOSE_FILE_COUCH down --volumes --remove-orphans
+  docker-compose -f $COMPOSE_FILE -f $COMPOSE_FILE_KAFKA -f $COMPOSE_FILE_RAFT2 -f $COMPOSE_FILE_ORG -f $COMPOSE_FILE_COUCH down --volumes --remove-orphans
   # Don't remove containers, images, etc if restarting
   if [ "$MODE" != "restart" ]; then
     #Cleanup the chaincode containers
@@ -144,20 +144,20 @@ function networkDown () {
     #Cleanup images
     removeUnwantedImages
     # remove orderer block and other channel configuration transactions and certs
-    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org3-artifacts/crypto-config/ channel-artifacts/org3.json
+    rm -rf channel-artifacts/*.block channel-artifacts/*.tx crypto-config ./org${ORG}-artifacts/crypto-config/ channel-artifacts/org${ORG}.json
     # remove the docker-compose yaml file that was customized to the example
     rm -f docker-compose-e2e.yaml
   fi
 }
 
 # Use the CLI container to create the configuration transaction needed to add
-# Org3 to the network
+# new Org to the network
 function createConfigTx () {
   echo
   echo "###############################################################"
-  echo "####### Generate and submit config tx to add Org3 #############"
+  echo "####### Generate and submit config tx to add Org${ORG} #############"
   echo "###############################################################"
-  docker exec cli scripts/step1org3.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE
+  docker exec cli scripts/step1org.sh $CHANNEL_NAME $CLI_DELAY $LANGUAGE $CLI_TIMEOUT $VERBOSE $ORG
   if [ $? -ne 0 ]; then
     echo "ERROR !!!! Unable to create config tx"
     exit 1
@@ -168,7 +168,7 @@ function createConfigTx () {
 # (x509 certs) for the new org.  After we run the tool, the certs will
 # be parked in the BYFN folder titled ``crypto-config``.
 
-# Generates Org3 certs using cryptogen tool
+# Generates new Org certs using cryptogen tool
 function generateCerts (){
   which cryptogen
   if [ "$?" -ne 0 ]; then
@@ -177,12 +177,12 @@ function generateCerts (){
   fi
   echo
   echo "###############################################################"
-  echo "##### Generate Org3 certificates using cryptogen tool #########"
+  echo "##### Generate Org${ORG} certificates using cryptogen tool #########"
   echo "###############################################################"
 
-  (cd org3-artifacts
+  (cd org${ORG}-artifacts
    set -x
-   cryptogen generate --config=./org3-crypto.yaml
+   cryptogen generate --config=./org${ORG}-crypto.yaml
    res=$?
    set +x
    if [ $res -ne 0 ]; then
@@ -201,20 +201,20 @@ function generateChannelArtifacts() {
     exit 1
   fi
   echo "##########################################################"
-  echo "#########  Generating Org3 config material ###############"
+  echo "#########  Generating Org${ORG} config material ###############"
   echo "##########################################################"
-  (cd org3-artifacts
+  (cd org${ORG}-artifacts
    export FABRIC_CFG_PATH=$PWD
    set -x
-   configtxgen -printOrg Org3MSP > ../channel-artifacts/org3.json
+   configtxgen -printOrg Org${ORG}MSP > ../channel-artifacts/org${ORG}.json
    res=$?
    set +x
    if [ $res -ne 0 ]; then
-     echo "Failed to generate Org3 config material..."
+     echo "Failed to generate Org${ORG} config material..."
      exit 1
    fi
   )
-  cp -r crypto-config/ordererOrganizations org3-artifacts/crypto-config/
+  cp -r crypto-config/ordererOrganizations org${ORG}-artifacts/crypto-config/
   echo
 }
 
@@ -235,6 +235,8 @@ OS_ARCH=$(echo "$(uname -s|tr '[:upper:]' '[:lower:]'|sed 's/mingw64_nt.*/window
 CLI_TIMEOUT=10
 #default for delay
 CLI_DELAY=3
+#Organisation number
+ORG=-1
 # channel name defaults to "mychannel"
 CHANNEL_NAME="mychannel"
 # use this as the default docker-compose yaml definition
@@ -242,9 +244,9 @@ COMPOSE_FILE=docker-compose-cli.yaml
 #
 COMPOSE_FILE_COUCH=docker-compose-couch.yaml
 # use this as the default docker-compose yaml definition
-COMPOSE_FILE_ORG3=docker-compose-org3.yaml
+COMPOSE_FILE_ORG=docker-compose-org3.yaml
 #
-COMPOSE_FILE_COUCH_ORG3=docker-compose-couch-org3.yaml
+COMPOSE_FILE_COUCH_ORG=docker-compose-couch-org3.yaml
 # kafka and zookeeper compose file
 COMPOSE_FILE_KAFKA=docker-compose-kafka.yaml
 # two additional etcd/raft orderers
@@ -272,7 +274,7 @@ else
   printHelp
   exit 1
 fi
-while getopts "h?c:t:d:f:s:l:i:v" opt; do
+while getopts "h?c:t:d:f:s:l:i:o:v" opt; do
   case "$opt" in
     h|\?)
       printHelp
@@ -283,6 +285,8 @@ while getopts "h?c:t:d:f:s:l:i:v" opt; do
     t)  CLI_TIMEOUT=$OPTARG
     ;;
     d)  CLI_DELAY=$OPTARG
+    ;;
+    o)  ORG=$OPTARG
     ;;
     f)  COMPOSE_FILE=$OPTARG
     ;;
@@ -296,6 +300,15 @@ while getopts "h?c:t:d:f:s:l:i:v" opt; do
     ;;
   esac
 done
+
+if [ $ORG == -1]; then
+  echo "Organisation number required, use -o 3, to give ORG_NUMBER=3"
+  exit 1
+fi
+./generate-org-scripts.sh $ORG
+# use this as the default docker-compose yaml definition
+COMPOSE_FILE_ORG=$(echo docker-compose-org${ORG}.yaml)
+COMPOSE_FILE_COUCH_ORG=$(echo docker-compose-couch-org${ORG}.yaml)
 
 # Announce what was requested
 

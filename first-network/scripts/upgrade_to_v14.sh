@@ -23,13 +23,13 @@ LANGUAGE=$(echo "$LANGUAGE" | tr [:upper:] [:lower:])
 COUNTER=1
 MAX_RETRY=5
 
-EB_SRC_PATH="github.com/chaincode/energyblocks/"
+EB_SRC_PATH="/opt/gopath/src/github.com/chaincode/energyblocks/"
 LANGUAGE="node"
 
-CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
-if [ "$LANGUAGE" = "node" ]; then
-  CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
-fi
+# CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
+# if [ "$LANGUAGE" = "node" ]; then
+#   CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
+# fi
 
 echo "Channel name : "$CHANNEL_NAME
 

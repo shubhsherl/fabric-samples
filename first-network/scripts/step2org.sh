@@ -5,29 +5,30 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-# This script is designed to be run in the org3cli container as the
-# second step of the EYFN tutorial. It joins the org3 peers to the
+# This script is designed to be run in the new orgcli container as the
+# second step of the EYFN tutorial. It joins the new org peers to the
 # channel previously setup in the BYFN tutorial and install the
-# chaincode as version 2.0 on peer0.org3.
+# chaincode as version 2.0 on peer0.org${ORG}.
 #
 
-echo
-echo "========= Getting Org3 on to your first network ========= "
-echo
 CHANNEL_NAME="$1"
 DELAY="$2"
 LANGUAGE="$3"
 TIMEOUT="$4"
 VERBOSE="$5"
+ORG="$6"
 : ${CHANNEL_NAME:="mychannel"}
 : ${DELAY:="3"}
 : ${LANGUAGE:="golang"}
 : ${TIMEOUT:="10"}
 : ${VERBOSE:="false"}
+: ${ORG:="3"}
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=5
-
+echo
+echo "========= Getting Org${ORG} on to your first network ========= "
+echo
 EB_SRC_PATH="/opt/gopath/src/github.com/chaincode/energyblocks/"
 LANGUAGE="node"
 
@@ -47,10 +48,10 @@ set +x
 cat log.txt
 verifyResult $res "Fetching config block from orderer has Failed"
 
-joinChannelWithRetry 0 3
-echo "===================== peer0.org3 joined channel '$CHANNEL_NAME' ===================== "
-echo "Installing chaincode 2.0 on peer0.org3..."
-installChaincode 0 3 2.0
+joinChannelWithRetry 0 $ORG
+echo "===================== peer0.org${ORG} joined channel '$CHANNEL_NAME' ===================== "
+echo "Installing chaincode 2.0 on peer0.org${ORG}..."
+installChaincode 0 $ORG 2.0
 
 echo
 echo "========= Org3 is now halfway onto your first network ========= "
