@@ -25,12 +25,12 @@ DELAY="$2"
 LANGUAGE="$3"
 TIMEOUT="$4"
 VERBOSE="$5"
-ORG="$6"
+ORG_NO="$6"
 : ${CHANNEL_NAME:="mychannel"}
 : ${TIMEOUT:="10"}
 : ${LANGUAGE:="golang"}
 : ${VERBOSE:="false"}
-: ${ORG:="3"}
+: ${ORG_NO:="3"}
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=5
@@ -48,19 +48,19 @@ echo "Channel name : "$CHANNEL_NAME
 # import functions
 . scripts/utils.sh
 
-# Query chaincode on peer0.org${ORG}, check if the result is 1.4952
-echo "Querying chaincode bill on peer0.org${ORG}..."
-chaincodeQueryBill 0 $ORG 1.4952
+# Query chaincode on peer0.org${ORG_NO}, check if the result is 1.4952
+echo "Querying chaincode bill on peer0.org${ORG_NO}..."
+chaincodeQueryBill 0 $ORG_NO 1.4952
 
 # Invoke chaincode on peer0.org1, peer0.org2, and peer0.org
-# echo "Sending invoke transaction on peer0.org1 peer0.org2 peer0.org${ORG}..."
+# echo "Sending invoke transaction on peer0.org1 peer0.org2 peer0.org${ORG_NO}..."
 # chaincodeInvoke 0 1 0 2 0 3
 
-# Query on chaincode on peer0.org${ORG}, peer0.org2, peer0.org1 check if the result is 80
+# Query on chaincode on peer0.org${ORG_NO}, peer0.org2, peer0.org1 check if the result is 80
 # We query a peer in each organization, to ensure peers from all organizations are in sync
 # and there is no state fork between organizations.
-# echo "Querying chaincode on peer0.org${ORG}..."
-# chaincodeQuery 0 $ORG 80
+# echo "Querying chaincode on peer0.org${ORG_NO}..."
+# chaincodeQuery 0 $ORG_NO 80
 
 # echo "Querying chaincode on peer0.org2..."
 # chaincodeQuery 0 2 80
