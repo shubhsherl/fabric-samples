@@ -25,14 +25,20 @@ LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=10
 
-CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
-if [ "$LANGUAGE" = "node" ]; then
-	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
-fi
+EB_SRC_PATH="github.com/chaincode/energyblocks/"
+LANGUAGE="node"
 
-if [ "$LANGUAGE" = "java" ]; then
-	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/java/"
-fi
+echo "Installing jq"
+apt-get -y update && apt-get -y install jq
+
+# CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
+# if [ "$LANGUAGE" = "node" ]; then
+# 	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
+# fi
+
+# if [ "$LANGUAGE" = "java" ]; then
+# 	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/java/"
+# fi
 
 echo "Channel name : "$CHANNEL_NAME
 
@@ -97,20 +103,36 @@ if [ "${NO_CHAINCODE}" != "true" ]; then
 	instantiateChaincode 0 2
 
 	# Query chaincode on peer0.org1
-	echo "Querying chaincode on peer0.org1..."
-	chaincodeQuery 0 1 100
+	# echo "Querying chaincode on peer0.org1..."
+	# chaincodeQuery 0 1 100
 
 	# Invoke chaincode on peer0.org1 and peer0.org2
-	echo "Sending invoke transaction on peer0.org1 peer0.org2..."
-	chaincodeInvoke 0 1 0 2
+	echo "Sending invoke freq transaction on peer0.org1 peer0.org2..."
+	chaincodeInvokeFreq 0 1 0 2
 	
 	## Install chaincode on peer1.org2
 	echo "Installing chaincode on peer1.org2..."
 	installChaincode 1 2
 
-	# Query on chaincode on peer1.org2, check if the result is 90
-	echo "Querying chaincode on peer1.org2..."
-	chaincodeQuery 1 2 90
+	# Query on chaincode on peer1.org2, check if the result is 50.02
+	echo "Querying chaincode freq on peer1.org2..."
+	chaincodeQueryFreq 1 2 50.02
+
+	# Invoke chaincode on peer1.org2
+	echo "Sending invoke unit transaction on peer1.org2..."
+	chaincodeInvokeUnit 0 1
+
+	# Query on chaincode on peer1.org2, check if the result is 0.3
+	echo "Querying chaincode unit on peer1.org2..."
+	chaincodeQueryUnit 1 2 0.3
+
+	# Invoke chaincode on peer0.org1
+	echo "Sending invoke bill transaction on peer1.org2..."
+	chaincodeInvokeBill 0 1
+
+	# Query on chaincode on peer1.org2, check if the result is 1.4952
+	echo "Querying chaincode bill on peer1.org2..."
+	chaincodeQueryBill 1 2 1.4952
 	
 fi
 

@@ -25,6 +25,9 @@ LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
 COUNTER=1
 MAX_RETRY=5
 
+EB_SRC_PATH="github.com/chaincode/energyblocks/"
+LANGUAGE="node"
+
 CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
 if [ "$LANGUAGE" = "node" ]; then
 	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
@@ -37,8 +40,6 @@ echo
 echo "========= Creating config transaction to add org3 to network =========== "
 echo
 
-echo "Installing jq"
-apt-get -y update && apt-get -y install jq
 
 # Fetch the config for the channel, writing it to config.json
 fetchChannelConfig ${CHANNEL_NAME} config.json

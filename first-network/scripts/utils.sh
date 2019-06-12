@@ -119,7 +119,7 @@ installChaincode() {
   setGlobals $PEER $ORG
   VERSION=${3:-1.0}
   set -x
-  peer chaincode install -n mycc -v ${VERSION} -l ${LANGUAGE} -p ${CC_SRC_PATH} >&log.txt
+  peer chaincode install -n energy -v ${VERSION} -l ${LANGUAGE} -p ${EB_SRC_PATH} >&log.txt
   res=$?
   set +x
   cat log.txt
@@ -139,12 +139,12 @@ instantiateChaincode() {
   # the "-o" option
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
-    peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc -l ${LANGUAGE} -v ${VERSION} -c '{"Args":["init","a","100","b","200"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+    peer chaincode instantiate -o orderer.example.com:7050 -C $CHANNEL_NAME -n energy -l ${LANGUAGE} -v ${VERSION} -c '{"Args":["init"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
     res=$?
     set +x
   else
     set -x
-    peer chaincode instantiate -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -l ${LANGUAGE} -v 1.0 -c '{"Args":["init","a","100","b","200"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
+    peer chaincode instantiate -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy -l ${LANGUAGE} -v 1.0 -c '{"Args":["init"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer')" >&log.txt
     res=$?
     set +x
   fi
@@ -160,7 +160,7 @@ upgradeChaincode() {
   setGlobals $PEER $ORG
 
   set -x
-  peer chaincode upgrade -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc -v 2.0 -c '{"Args":["init","a","90","b","210"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')"
+  peer chaincode upgrade -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy -v 2.0 -c '{"Args":["init","a","90","b","210"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')"
   res=$?
   set +x
   cat log.txt
@@ -169,7 +169,7 @@ upgradeChaincode() {
   echo
 }
 
-chaincodeQuery() {
+chaincodeQueryFreq() {
   PEER=$1
   ORG=$2
   setGlobals $PEER $ORG
@@ -186,10 +186,90 @@ chaincodeQuery() {
     sleep $DELAY
     echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s) - starttime)) secs"
     set -x
-    peer chaincode query -C $CHANNEL_NAME -n mycc -c '{"Args":["query","a"]}' >&log.txt
+    peer chaincode query -C $CHANNEL_NAME -n energy -c '{"Args":["readFreq","1560323335"]}' >&log.txt
     res=$?
     set +x
-    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}')
+    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}' | jq '.avgFreq')
+    test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+    # removed the string "Query Result" from peer chaincode query command
+    # result. as a result, have to support both options until the change
+    # is merged.
+    test $rc -ne 0 && VALUE=$(cat log.txt | egrep '^[0-9]+$')
+    test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+  done
+  echo
+  cat log.txt
+  if test $rc -eq 0; then
+    echo "===================== Query successful on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' ===================== "
+  else
+    echo "!!!!!!!!!!!!!!! Query result on peer${PEER}.org${ORG} is INVALID !!!!!!!!!!!!!!!!"
+    echo "================== ERROR !!! FAILED to execute End-2-End Scenario =================="
+    echo
+    exit 1
+  fi
+}
+
+chaincodeQueryUnit() {
+  PEER=$1
+  ORG=$2
+  setGlobals $PEER $ORG
+  EXPECTED_RESULT=$3
+  echo "===================== Querying on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME'... ===================== "
+  local rc=1
+  local starttime=$(date +%s)
+
+  # continue to poll
+  # we either get a successful response, or reach TIMEOUT
+  while
+    test "$(($(date +%s) - starttime))" -lt "$TIMEOUT" -a $rc -ne 0
+  do
+    sleep $DELAY
+    echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s) - starttime)) secs"
+    set -x
+    peer chaincode query -C $CHANNEL_NAME -n energy -c '{"Args":["readUnit","Org1","Org2","1560323335"]}' >&log.txt
+    res=$?
+    set +x
+    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}'| jq '.units')
+    test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+    # removed the string "Query Result" from peer chaincode query command
+    # result. as a result, have to support both options until the change
+    # is merged.
+    test $rc -ne 0 && VALUE=$(cat log.txt | egrep '^[0-9]+$')
+    test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
+  done
+  echo
+  cat log.txt
+  if test $rc -eq 0; then
+    echo "===================== Query successful on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME' ===================== "
+  else
+    echo "!!!!!!!!!!!!!!! Query result on peer${PEER}.org${ORG} is INVALID !!!!!!!!!!!!!!!!"
+    echo "================== ERROR !!! FAILED to execute End-2-End Scenario =================="
+    echo
+    exit 1
+  fi
+}
+
+chaincodeQueryBill() {
+  PEER=$1
+  ORG=$2
+  setGlobals $PEER $ORG
+  EXPECTED_RESULT=$3
+  echo "===================== Querying on peer${PEER}.org${ORG} on channel '$CHANNEL_NAME'... ===================== "
+  local rc=1
+  local starttime=$(date +%s)
+
+  # continue to poll
+  # we either get a successful response, or reach TIMEOUT
+  while
+    test "$(($(date +%s) - starttime))" -lt "$TIMEOUT" -a $rc -ne 0
+  do
+    sleep $DELAY
+    echo "Attempting to Query peer${PEER}.org${ORG} ...$(($(date +%s) - starttime)) secs"
+    set -x
+    peer chaincode query -C $CHANNEL_NAME -n energy -c '{"Args":["readBill","Org1","Org2","1560323335"]}' >&log.txt
+    res=$?
+    set +x
+    test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}' | jq '.price')
     test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
     # removed the string "Query Result" from peer chaincode query command
     # result. as a result, have to support both options until the change
@@ -293,9 +373,9 @@ parsePeerConnectionParameters() {
   PEERS="$(echo -e "$PEERS" | sed -e 's/^[[:space:]]*//')"
 }
 
-# chaincodeInvoke <peer> <org> ...
+# chaincodeInvokeFreq <peer> <org> ...
 # Accepts as many peer/org pairs as desired and requests endorsement from each
-chaincodeInvoke() {
+chaincodeInvokeFreq() {
   parsePeerConnectionParameters $@
   res=$?
   verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
@@ -305,12 +385,66 @@ chaincodeInvoke() {
   # it using the "-o" option
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
-    peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n mycc $PEER_CONN_PARMS -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+    peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n energy $PEER_CONN_PARMS -c '{"Args":["initFreq","1560323335","1560324180","50.02"]}' >&log.txt
     res=$?
     set +x
   else
     set -x
-    peer chaincode invoke -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n mycc $PEER_CONN_PARMS -c '{"Args":["invoke","a","b","10"]}' >&log.txt
+    peer chaincode invoke -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy $PEER_CONN_PARMS -c '{"Args":["initFreq","1560323335","1560324180","50.02"]}' >&log.txt
+    res=$?
+    set +x
+  fi
+  cat log.txt
+  verifyResult $res "Invoke execution on $PEERS failed "
+  echo "===================== Invoke transaction successful on $PEERS on channel '$CHANNEL_NAME' ===================== "
+  echo
+}
+
+# chaincodeInvoke <peer> <org> ...
+# Accepts as many peer/org pairs as desired and requests endorsement from each
+chaincodeInvokeUnit() {
+  parsePeerConnectionParameters $@
+  res=$?
+  verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
+
+  # while 'peer chaincode' command can get the orderer endpoint from the
+  # peer (if join was successful), let's supply it directly as we know
+  # it using the "-o" option
+  if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+    set -x
+    peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n energy $PEER_CONN_PARMS -c '{"Args":["initUnit","Org1","Org2","1560323335","1560324180","0.3"]}' >&log.txt
+    res=$?
+    set +x
+  else
+    set -x
+    peer chaincode invoke -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy $PEER_CONN_PARMS -c '{"Args":["initUnit","Org1","Org2","1560323335","1560324180","0.3"]}' >&log.txt
+    res=$?
+    set +x
+  fi
+  cat log.txt
+  verifyResult $res "Invoke execution on $PEERS failed "
+  echo "===================== Invoke transaction successful on $PEERS on channel '$CHANNEL_NAME' ===================== "
+  echo
+}
+
+# chaincodeInvoke <peer> <org> ...
+# Accepts as many peer/org pairs as desired and requests endorsement from each
+chaincodeInvokeBill() {
+  parsePeerConnectionParameters $@
+  res=$?
+  verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
+
+  # while 'peer chaincode' command can get the orderer endpoint from the
+  # peer (if join was successful), let's supply it directly as we know
+  # it using the "-o" option
+  if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
+    set -x
+    peer chaincode invoke -o orderer.example.com:7050 -C $CHANNEL_NAME -n energy $PEER_CONN_PARMS -c '{"Args":["initBill","Org1","Org2","1560323335","1560324180"]}' >&log.txt
+    res=$?
+    set +x
+  else
+    set -x
+    peer chaincode invoke -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy $PEER_CONN_PARMS -c '{"Args":["initBill","Org1","Org2","1560323335","1560324180"]}' >&log.txt
     res=$?
     set +x
   fi
