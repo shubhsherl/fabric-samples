@@ -31,6 +31,7 @@ setOrdererGlobals() {
 setGlobals() {
   PEER=$1
   ORG=$2
+  PORT=$(expr $ORG_NO + 8)
   if [ $ORG -eq 1 ]; then
     CORE_PEER_LOCALMSPID="Org1MSP"
     CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG1_CA
@@ -60,7 +61,14 @@ setGlobals() {
       CORE_PEER_ADDRESS=peer1.org3.example.com:12051
     fi
   else
-    echo "================== ERROR !!! ORG Unknown =================="
+    CORE_PEER_LOCALMSPID="Org${ORG}MSP"
+    CORE_PEER_TLS_ROOTCERT_FILE=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org${ORG}.example.com/peers/peer0.org${ORG}.example.com/tls/ca.crt
+    CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org${ORG}.example.com/users/Admin@org${ORG}.example.com/msp
+    if [ $PEER -eq 0 ]; then
+      CORE_PEER_ADDRESS=peer0.org${ORG}.example.com:${PORT}051
+    else
+          echo "================== ERROR !!! ORG and PEER Unknown =================="
+    fi
   fi
 
   if [ "$VERBOSE" == "true" ]; then
@@ -160,7 +168,7 @@ upgradeChaincode() {
   setGlobals $PEER $ORG
 
   set -x
-  peer chaincode upgrade -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy -v 2.0 -c '{"Args":["init","a","90","b","210"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')"
+  peer chaincode upgrade -o orderer.example.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n energy -v 2.0 -c '{"Args":["init"]}' -P "AND ('Org1MSP.peer','Org2MSP.peer','Org3MSP.peer')"
   res=$?
   set +x
   cat log.txt

@@ -54,7 +54,7 @@ echo "Installing chaincode 2.0 on peer0.org${ORG_NO}..."
 installChaincode 0 $ORG_NO 2.0
 
 echo
-echo "========= Org3 is now halfway onto your first network ========= "
+echo "========= Org${ORG_NO} is now halfway onto your first network ========= "
 echo
 
 exit 0
