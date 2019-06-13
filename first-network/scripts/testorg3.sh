@@ -46,25 +46,26 @@ echo "Channel name : "$CHANNEL_NAME
 # import functions
 . scripts/utils.sh
 
-# Query chaincode on peer0.org3, check if the result is 1.4952
+# Query chaincode on peer0.org3, check if the result is 1.505
 echo "Querying chaincode bill on peer0.org3..."
-chaincodeQueryBill 0 3 1.4952
+chaincodeQueryBill 0 3 1.505
 
-# Invoke chaincode on peer0.org1, peer0.org2, and peer0.org3
-# echo "Sending invoke transaction on peer0.org1 peer0.org2 peer0.org3..."
-# chaincodeInvoke 0 1 0 2 0 3
+# echo "Sending invoke freq transaction on peer0.org1 peer0.org2 peer0.org3...10sec"
+# sleep 10
+# chaincodeInvokeFreq 0 1 0 2 0 3
 
-# Query on chaincode on peer0.org3, peer0.org2, peer0.org1 check if the result is 80
-# We query a peer in each organization, to ensure peers from all organizations are in sync
-# and there is no state fork between organizations.
-# echo "Querying chaincode on peer0.org3..."
-# chaincodeQuery 0 3 80
+# # Query on chaincode on peer1.org2, check if the result is 50.02
+# echo "Querying chaincode freq on peer0.org1...5sec"
+# sleep 5
+# chaincodeQueryFreq 0 1 50.02
 
-# echo "Querying chaincode on peer0.org2..."
-# chaincodeQuery 0 2 80
+# # Query on chaincode on peer1.org2, check if the result is 50.02
+# echo "Querying chaincode freq on peer0.org2..."
+# chaincodeQueryFreq 0 2 50.02
 
-# echo "Querying chaincode on peer0.org1..."
-# chaincodeQuery 0 1 80
+# # Query on chaincode on peer1.org2, check if the result is 50.02
+# echo "Querying chaincode freq on peer0.org${ORG_NO}..."
+# chaincodeQueryFreq 0 ${ORG_NO} 50.02
 
 
 echo
