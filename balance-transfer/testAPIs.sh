@@ -21,7 +21,7 @@ function printHelp () {
   echo "    -l <language> - chaincode language (defaults to \"golang\")"
 }
 # Language defaults to "golang"
-LANGUAGE="golang"
+LANGUAGE="node"
 
 # Parse commandline args
 while getopts "h?l:" opt; do
@@ -43,7 +43,7 @@ function setChaincodePath(){
 		CC_SRC_PATH="github.com/example_cc/go"
 		;;
 		"node")
-		CC_SRC_PATH="$PWD/artifacts/src/github.com/example_cc/node"
+		CC_SRC_PATH="$PWD/artifacts/src/github.com/energyblocks/"
 		;;
 		*) printf "\n ------ Language $LANGUAGE is not supported yet ------\n"$
 		exit 1
@@ -178,12 +178,12 @@ curl -s -X POST \
 	\"chaincodeName\":\"mycc\",
 	\"chaincodeVersion\":\"v0\",
 	\"chaincodeType\": \"$LANGUAGE\",
-	\"args\":[\"a\",\"100\",\"b\",\"200\"]
+	\"args\":[]
 }"
 echo
 echo
 
-echo "POST invoke chaincode on peers of Org1 and Org2"
+echo "POST init freq chaincode on peers of Org1 and Org2"
 echo
 VALUES=$(curl -s -X POST \
   http://localhost:4000/channels/mychannel/chaincodes/mycc \
@@ -191,8 +191,8 @@ VALUES=$(curl -s -X POST \
   -H "content-type: application/json" \
   -d "{
   \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
-  \"fcn\":\"move\",
-  \"args\":[\"a\",\"b\",\"10\"]
+  \"fcn\":\"initFreq\",
+  \"args\":[\"121212\",\"121224\",\"50.02\"]
 }")
 echo $VALUES
 # Assign previous invoke transaction id  to TRX_ID
@@ -200,19 +200,36 @@ MESSAGE=$(echo $VALUES | jq -r ".message")
 TRX_ID=${MESSAGE#*ID:}
 echo
 
-echo "GET query chaincode on peer1 of Org1"
+echo "GET query freq chaincode on peer1 of Org1"
 echo
 curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=query&args=%5B%22a%22%5D" \
+  "http://localhost:4000/channels/mychannel/chaincodes/mycc?peer=peer0.org1.example.com&fcn=readFreq&args=%5B%22121212%22%5D" \
   -H "authorization: Bearer $ORG1_TOKEN" \
   -H "content-type: application/json"
 echo
 echo
 
-echo "GET query Block by blockNumber"
+echo "POST init unit chaincode on peers of Org1 and Org2"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"initUnit\",
+  \"args\":[\"Org1\",\"Org2\",\"121212\",\"121224\",\"0.3\"]
+}")
+echo $VALUES
+# Assign previous invoke transaction id  to TRX_ID
+MESSAGE=$(echo $VALUES | jq -r ".message")
+TRX_ID=${MESSAGE#*ID:}
+echo
+
+echo "GET query unit Block by blockNumber"
 echo
 BLOCK_INFO=$(curl -s -X GET \
-  "http://localhost:4000/channels/mychannel/blocks/1?peer=peer0.org1.example.com" \
+  "http://localhost:4000/channels/mychannel/blocks/2?peer=peer0.org1.example.com" \
   -H "authorization: Bearer $ORG1_TOKEN" \
   -H "content-type: application/json")
 echo $BLOCK_INFO
@@ -220,16 +237,34 @@ echo $BLOCK_INFO
 HASH=$(echo $BLOCK_INFO | jq -r ".header.previous_hash")
 echo
 
-echo "GET query Transaction by TransactionID"
+echo "POST init bill chaincode on peers of Org1 and Org2"
+echo
+VALUES=$(curl -s -X POST \
+  http://localhost:4000/channels/mychannel/chaincodes/mycc \
+  -H "authorization: Bearer $ORG1_TOKEN" \
+  -H "content-type: application/json" \
+  -d "{
+  \"peers\": [\"peer0.org1.example.com\",\"peer0.org2.example.com\"],
+  \"fcn\":\"initBill\",
+  \"args\":[\"Org1\",\"Org2\",\"121212\",\"121224\"]
+}")
+echo $VALUES
+# Assign previous invoke transaction id  to TRX_ID
+MESSAGE=$(echo $VALUES | jq -r ".message")
+TRX_ID=${MESSAGE#*ID:}
+echo
+
+echo "GET query bill Transaction by TransactionID"
 echo
 curl -s -X GET http://localhost:4000/channels/mychannel/transactions/$TRX_ID?peer=peer0.org1.example.com \
   -H "authorization: Bearer $ORG1_TOKEN" \
   -H "content-type: application/json"
+echo "price should be 1.505"
 echo
 echo
 
 
-echo "GET query Block by Hash - Hash is $HASH"
+echo "GET query unit Block by Hash - Hash is $HASH"
 echo
 curl -s -X GET \
   "http://localhost:4000/channels/mychannel/blocks?hash=$HASH&peer=peer0.org1.example.com" \

@@ -54,7 +54,7 @@ var updateAnchorPeers = async function(channelName, configUpdatePath, username, 
 					let message = 'REQUEST_TIMEOUT:' + eh.getPeerAddr();
 					logger.error(message);
 					eh.disconnect();
-				}, 60000);
+				}, 300000);
 				eh.registerBlockEvent((block) => {
 					logger.info('The config update has been committed on peer %s',eh.getPeerAddr());
 					clearTimeout(event_timeout);
